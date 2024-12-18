@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "936939446997",
+    "firebase_url": "https://gi-3d-9a6cd-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "gi-3d-9a6cd",
+    "storage_bucket": "gi-3d-9a6cd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:936939446997:android:619b9b73f151e4a39db85c",
+        "android_client_info": {
+          "package_name": "com.kyungil.myfirebasetest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOQcnD-Lpi5noi3T16o5eqI49kvKx7R6A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
