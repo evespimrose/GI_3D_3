@@ -2,6 +2,15 @@
 #
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
 #
+/Assets/Plugins/Firebase/.dll
+/Assets/Plugins/Firebase/Editor/.dll
+
+/Assets/Plugins//*.dll
+/Assets/Plugins//.pdb
+
+/Assets/Plugins/Android/**/.dll
+/Assets/Plugins/iOS/*/.dll
+
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
