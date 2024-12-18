@@ -4,10 +4,8 @@
 #
 /Assets/Plugins/Firebase/.dll
 /Assets/Plugins/Firebase/Editor/.dll
-/Assets/Plugins/Firebase/.bundle
-/Assets/Plugins/Firebase/Editor/.bundle
-/Assets/Plugins/Firebase/.so
-/Assets/Plugins/Firebase/Editor/.so
+*.bundle
+*.so
 
 /Assets/Plugins//*.dll
 /Assets/Plugins//.pdb
