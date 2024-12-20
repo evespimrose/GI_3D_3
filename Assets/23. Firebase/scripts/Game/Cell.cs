@@ -8,7 +8,7 @@ public class Cell : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
 {
     public string coodinate;
 
-    public bool isEmpty;
+    public bool isEmpty = true;
 
     [HideInInspector] public Board board;
 
@@ -16,10 +16,10 @@ public class Cell : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, I
 
     public void OnPointerClick(PED eventData)
     {
-        if(!isEmpty || !board.isMyTurn)
+        if(isEmpty || !board.isMyTurn)
         {
             board.SelectCell(this);
-            isEmpty = true;
+            isEmpty = false;
         }
     }
 
