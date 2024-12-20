@@ -23,11 +23,16 @@ public class UIHome : UIPage
     public Button jemAddButton;
     public Button rankButton;
     public Button messageButton;
+    public Button inviteButton;
+
+    public Board gameBoard;
+
 
     public Image expFillImage;
 
     private string messageTarget;
 
+    private Room currentRoom;
 
     private void Awake()
     {
@@ -38,6 +43,71 @@ public class UIHome : UIPage
         huntButton.onClick.AddListener(HuntButtonClick);
         rankButton.onClick.AddListener(RankButtonClick);
         messageButton.onClick.AddListener(MessageButtonClick);
+        inviteButton.onClick.AddListener(InviteButtonClick);
+
+        gameBoard.gameObject.SetActive(false);
+    }
+
+    private void Start()
+    {
+        FirebaseManager.Instance.onGameStart += GameStart;
+        FirebaseManager.Instance.onTurnProcceed += ProcessTurn;
+    }
+
+    public void GameStart(Room room, bool isHost)
+    {
+        currentRoom = room;
+        gameBoard.isHost = isHost;
+        gameBoard.gameObject.SetActive(true);
+    }
+
+    public void ProcessTurn(Turn turn)
+    {
+        gameBoard.turnCount++;
+        //새로운 턴 입력이 추가 될 때마다 호출.
+
+
+        gameBoard.PlaceMark(turn.isHostTurn, turn.coodinate);
+
+        gameBoard.isMyTurn = turn.isHostTurn != gameBoard.isHost;
+
+        bool result = gameBoard.isGameOver(gameBoard.isMyTurn);
+        if (result)
+        {
+            //오목 한 개 이상 있음
+        }
+        else
+        {
+            // 오목 없음
+        }
+    }
+
+    private void InviteButtonClick()
+    {
+        var popup = UIManager.Instance.PopupOpen<UIInputFieldPopup>();
+        popup.SetPopup("초대하기", "누구를 초대하시겠습니까?", InviteTarget);
+    }
+
+    private async void InviteTarget(string target)
+    {
+        Room room = new Room()
+        {
+            host = FirebaseManager.Instance.Auth.CurrentUser.UserId,
+            guest = target,
+            state = RoomState.Waiting,
+        };
+
+        await FirebaseManager.Instance.CreateRoom(room);
+
+        Message message = new Message()
+        {
+            type = MessageType.Invite,
+            sender = FirebaseManager.Instance.Auth.CurrentUser.UserId,
+            message = "",
+            sendTime = DateTime.Now.Ticks
+        };
+
+        await FirebaseManager.Instance.MessageToTarget(target, message);
     }
 
     private void MessageButtonClick()
@@ -57,10 +127,12 @@ public class UIHome : UIPage
     {
         Message message = new Message()
         {
+            type = MessageType.Message,
             sender = FirebaseManager.Instance.Auth.CurrentUser.UserId,
             message = messageText,
             sendTime = DateTime.Now.Ticks
-        };
+
+        }; 
 
         FirebaseManager.Instance.MessageToTarget(messageTarget, message);
     }

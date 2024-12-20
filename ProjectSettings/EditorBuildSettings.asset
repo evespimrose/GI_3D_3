@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/23. Firebase/Scenes/Firebase.unity
+    guid: 71e9f0248e3faca41bf5711913b66c71
   m_configObjects: {}

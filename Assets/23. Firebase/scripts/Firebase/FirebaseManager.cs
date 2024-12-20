@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
+using System.Threading.Tasks;
 
 
 public class FirebaseManager : MonoBehaviour
@@ -18,11 +19,16 @@ public class FirebaseManager : MonoBehaviour
 
     private DatabaseReference usersRef;
     private DatabaseReference messageRef;
+    private DatabaseReference roomRef;
 
     public event Action onLogIn;
+    public event Action<Room, bool> onGameStart;
+    public event Action<Turn> onTurnProcceed;
+    private Room currentRoom;
 
     public UserData currentUserData {  get; private set; }
 
+    private bool isHost;
 
     private void Awake()
     {
@@ -46,8 +52,25 @@ public class FirebaseManager : MonoBehaviour
 
             Message message = JsonConvert.DeserializeObject<Message>(rawJson);
 
-            var popup = UIManager.Instance.PopupOpen<UIDialogPopup>();
-            popup.SetPopup($"From.{message.sender}", $"{message.message}\n{message.GetSendTime()}");
+            if(message.isNew)
+            {
+                if (message.type == MessageType.Message)
+                {
+                    var popup = UIManager.Instance.PopupOpen<UIDialogPopup>();
+                    popup.SetPopup($"From.{message.sender}", $"{message.message}\n{message.GetSendTime()}");
+                }
+                else if (message.type == MessageType.Invite)
+                {
+                    var popup = UIManager.Instance.PopupOpen<UITwoButtonPopup>();
+                    popup.SetPopup("초대장", $"{message.sender}님의 게임에 참가하시겠습니까?", 
+                        ok => { 
+                            if(ok) 
+                                JoinRoom(message.sender); 
+                        });
+                }
+
+                args.Snapshot.Reference.Child("isNew").SetValueAsync(false);
+            }
 
         }
         else                            // 에러 발생
@@ -56,11 +79,76 @@ public class FirebaseManager : MonoBehaviour
         }
     }
 
-    public void MessageToTarget(string target, Message message)
+    public async Task CreateRoom(Room room)
+    {
+        currentRoom = room;
+
+        isHost = true;
+
+        roomRef = DB.GetReference($"rooms/{Auth.CurrentUser.UserId}");
+
+        string json = JsonConvert.SerializeObject(room);
+        await roomRef.SetRawJsonValueAsync(json);
+
+        roomRef.Child("state").ValueChanged += OnRoomStateChange;
+    }
+
+    private void OnRoomStateChange(object sender, ValueChangedEventArgs e)
+    {
+        object value = e.Snapshot.GetValue(true);
+        int state = int.Parse(value.ToString());
+
+        if(state.Equals((int)RoomState.Playing))
+        {
+            // 게임 스타트
+            onGameStart?.Invoke(currentRoom, true);
+            roomRef.Child("turn").ChildAdded += OnTurnAdded;
+        }
+        else if(state.Equals((int)RoomState.Finished))
+        {
+            print("게임 종료. 방 터뜨리기");
+        }
+    }
+
+    private void OnTurnAdded(object sender, ChildChangedEventArgs e)
+    {
+        string turnJson = e.Snapshot.GetRawJsonValue();
+        Turn turn = JsonConvert.DeserializeObject<Turn>(turnJson);
+        onTurnProcceed?.Invoke(turn);
+    }
+
+    public void SendTurn(int turnCount, Turn turn)
+    {
+        turn.isHostTurn = isHost;
+        string turnJson = JsonConvert.SerializeObject(turn);
+        roomRef.Child($"turn/{turnCount}").SetRawJsonValueAsync(turnJson);
+    }
+
+    private async void JoinRoom(string host)
+    {
+        roomRef = DB.GetReference($"rooms/{host}");
+
+        DataSnapshot roomSnapshot = await roomRef.GetValueAsync();
+
+        string roomJson = roomSnapshot.GetRawJsonValue();
+
+        Room room = JsonConvert.DeserializeObject<Room>(roomJson);
+
+        currentRoom = room;
+
+        isHost = false;
+
+        await roomRef.Child("state").SetValueAsync((int)RoomState.Playing);
+
+        onGameStart?.Invoke(room, false);
+        roomRef.Child("turn").ChildAdded += OnTurnAdded;
+    }
+
+    public async Task MessageToTarget(string target, Message message)
     {
         DatabaseReference targetRef = DB.GetReference($"msg/{target}");
         string messageJson = JsonConvert.SerializeObject(message);
-        targetRef.Child(message.sender + message.sendTime).SetRawJsonValueAsync(messageJson);
+        await targetRef.Child(message.sender + message.sendTime).SetRawJsonValueAsync(messageJson);
 
     }
 
@@ -177,6 +265,7 @@ public class FirebaseManager : MonoBehaviour
     public void SignOut()
     {
         Auth.SignOut();
+        messageRef.ChildAdded -= OnMessageReceive;
     }
 
     public async void OrderDataBase(Action<List<UserData>> callback = null)
