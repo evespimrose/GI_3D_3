@@ -6,22 +6,11 @@ using UnityEngine;
 
 public class FirebaseTest : MonoBehaviour
 {
-    // Start is called before the first frame update
     private async void Start()
     {
-        DependencyStatus status = await FirebaseApp.CheckAndFixDependenciesAsync();
+        DependencyStatus status =  await FirebaseApp.CheckAndFixDependenciesAsync();
         print(status);
-
-        try
-        {
-            AuthResult result = await FirebaseAuth.DefaultInstance.SignInWithEmailAndPasswordAsync("1@1.1", "111111");
-
-            print(result.User.UserId);
-        }
-        catch
-        {
-            print("FireBase 로그인 실패!");
-        }
+        var result = await FirebaseAuth.DefaultInstance.SignInWithEmailAndPasswordAsync("asd@asd.asd","a123456");
+        print(result.User.UserId);
     }
-
 }
